@@ -1,33 +1,65 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Copy, Download, Share2, Sparkles, Heart, CheckCircle, Home } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { Summary } from '../types';
 
 interface ResultsPageProps {
-  summary: string;
+  summary: Summary;
   onBackHome: () => void;
 }
 
 export const ResultsPage = ({ summary, onBackHome }: ResultsPageProps) => {
   const [showConfetti, setShowConfetti] = useState(true);
   const [copiedText, setCopiedText] = useState(false);
+  const [savedId, setSavedId] = useState(summary.id);
 
   useEffect(() => {
     const timer = setTimeout(() => setShowConfetti(false), 3000);
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    if (!summary.id && summary.user_id) {
+      saveSummary();
+    }
+  }, [summary]);
+
+  const saveSummary = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('summaries')
+        .insert({
+          user_id: summary.user_id,
+          title: summary.title,
+          original_content: summary.original_content,
+          summary_content: summary.summary_content,
+          content_type: summary.content_type,
+          original_length: summary.original_length,
+          summary_length: summary.summary_length
+        })
+        .select()
+        .maybeSingle();
+
+      if (error) throw error;
+      if (data) setSavedId(data.id);
+    } catch (error) {
+      console.error('Error saving summary:', error);
+    }
+  };
+
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(summary);
+    await navigator.clipboard.writeText(summary.summary_content);
     setCopiedText(true);
     setTimeout(() => setCopiedText(false), 2000);
   };
 
   const handleDownload = () => {
-    const blob = new Blob([summary], { type: 'text/plain' });
+    const blob = new Blob([summary.summary_content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'summary.txt';
+    a.download = `${summary.title}.txt`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -36,8 +68,8 @@ export const ResultsPage = ({ summary, onBackHome }: ResultsPageProps) => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'My Notes Summary',
-          text: summary
+          title: summary.title,
+          text: summary.summary_content
         });
       } catch (err) {
         console.log('Share cancelled');
@@ -46,7 +78,7 @@ export const ResultsPage = ({ summary, onBackHome }: ResultsPageProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-white overflow-hidden relative">
+    <div className="min-h-screen bg-white overflow-hidden relative pt-24">
       {showConfetti && (
         <div className="absolute inset-0 pointer-events-none z-20 overflow-hidden">
           {[...Array(50)].map((_, i) => (
@@ -146,7 +178,7 @@ export const ResultsPage = ({ summary, onBackHome }: ResultsPageProps) => {
             className="bg-gradient-to-br from-pink-50 to-white rounded-3xl p-8 shadow-xl border border-pink-100 mb-8"
           >
             <div className="prose prose-lg max-w-none">
-              {summary.split('\n').map((paragraph, idx) => (
+              {summary.summary_content.split('\n').map((paragraph, idx) => (
                 <motion.p
                   key={idx}
                   initial={{ opacity: 0, x: -20 }}

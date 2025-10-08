@@ -13,13 +13,17 @@ export interface AuthContextType {
 
 export interface Summary {
   id: string;
-  content: string;
-  originalLength: number;
-  summaryLength: number;
-  createdAt: string;
+  user_id: string;
+  title: string;
+  original_content: string;
+  summary_content: string;
+  content_type: 'pdf' | 'text';
+  original_length: number;
+  summary_length: number;
+  created_at: string;
 }
 
-export type PageType = 'intro' | 'upload' | 'processing' | 'results';
+export type PageType = 'intro' | 'home' | 'dashboard' | 'upload' | 'processing' | 'results';
 
 export interface ProcessingState {
   isProcessing: boolean;

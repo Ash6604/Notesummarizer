@@ -52,7 +52,7 @@ export const UploadPage = ({ onAnalyze }: UploadPageProps) => {
   const canAnalyze = (uploadType === 'pdf' && selectedFile) || (uploadType === 'text' && textContent.trim());
 
   return (
-    <div className="min-h-screen bg-white overflow-hidden relative">
+    <div className="min-h-screen bg-white overflow-hidden relative pt-24">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {[...Array(15)].map((_, i) => (
           <motion.div
